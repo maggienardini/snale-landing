@@ -126,6 +126,7 @@ section{position:relative;z-index:2}
 @media (max-width:520px){.join .row{flex-direction:column}.join .btn{width:100%}}
 footer .in{padding-block:30px 44px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font-size:14px;color:var(--muted)}
 footer .daypick{order:-1;flex-basis:100%;width:auto;justify-items:center;text-align:center;margin-bottom:16px}
+footer .daypick{display:none}   /* time-of-day picker hidden for now; delete this line to bring it back */
 
 
 /* ---------- the world: the ground, the light and the time of day ---------- */
@@ -148,10 +149,9 @@ html.w-night .skip{color:#0B4F6C}
 .daybtns button[aria-pressed="true"]{background:var(--blue);color:var(--ground,var(--tea))}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.intro-logo,.intro{transition:none}}
 
-/* one screen, no scrolling */
-html,body{height:100%;overflow:hidden}
-body{display:flex;flex-direction:column}
-main{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-evenly}
+/* one screen when it fits; on short screens it grows and scrolls instead of squashing sections together */
+body{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+main{flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:clamp(16px,3vh,32px);padding-block:8px}
 main>section{width:100%}
 main>.idea{min-height:0;padding-block:0;gap:clamp(8px,2vh,24px)}
 .idea h2,.hero h1{font-size:clamp(36px,min(9.5vw,13vh),128px)}
@@ -383,14 +383,8 @@ main>.idea{min-height:0;padding-block:0;gap:clamp(8px,2vh,24px)}
       setTimeout(()=>{ g.style.opacity=.25; },200); }
     setTimeout(()=>{ e.style.opacity=(o*.5).toFixed(2); },200);   // then it dries
   }
-  // where the snail wants to be: the point on the path level with a spot just below the middle of the screen
-  function targetLen(){
-    if(document.documentElement.scrollHeight<=innerHeight+1) return total*.5;   // no scrolling: rest halfway along the trail
-    if(scrollY+innerHeight>=document.documentElement.scrollHeight-60) return total;   // at the bottom: go and land
-    const y=scrollY+innerHeight*.58-main.offsetTop;
-    let lo=0, hi=samples.length-1; while(lo<hi){ const m=(lo+hi)>>1; if(samples[m][3]<y) lo=m+1; else hi=m; }
-    return samples[lo][0];
-  }
+  // where the snail wants to be: always the end of the path, the email box. It crawls there on its own and stays.
+  function targetLen(){ return total; }
   // Movement runs smoothly underneath, but what you see only changes 12 times a second, like stop-motion shot on twos.
   const FPS=12;
   // face runs from 1 (facing left, as drawn) to -1 (facing right); turning takes a few frames instead of flipping at once
