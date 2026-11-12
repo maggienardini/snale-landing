@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Snale</title>
+<meta name="description" content="Snale is a social app for artists, with no AI in it. Join the waitlist.">
+<meta name="theme-color" content="#DEF6CA">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Snale">
+<meta property="og:description" content="A social app for artists, with no AI in it. Join the waitlist.">
+<link rel="icon" type="image/png" href="img/snail.png">
+<style>
+@font-face{font-family:"Geist";font-style:normal;font-weight:300 700;font-display:swap;src:url(fonts/geist.woff2) format("woff2")}
+/* Layout: an opening where the logo draws itself and then shrinks into the header, then one idea per screen down a
+   tea-green page while the snail crawls a winding path behind the words and leaves a shiny trail. */
+/* Tea green is the ground, lavender only for small cards, Yale blue for text and buttons. The ground is a living scene that follows the time of day (see the world script at the end). */
+:root{
+  --tea:#DEF6CA; --blue:#0B4F6C; --berry:#9D3E7F; --orange:#F68A4C; --lav:#F5E5FC; --white:#FFFFFF;
+  --muted:#3F6A6E; --line:#BFE0A6; --water:#B5D7DF; --block:#CDEBB5; --park:#C2E5A2;
+  --f:"Geist","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--tea);color:var(--blue);font-family:var(--f);font-size:18px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body.intro-on{overflow:hidden}
+h1,h2,h3,p{margin:0}
+h1,h2{font-weight:560;letter-spacing:-.05em;line-height:.98;text-wrap:balance}
+:focus-visible{outline:2.5px solid var(--berry);outline-offset:3px}
+button,input{font:inherit;color:inherit}
+.in{max-width:1040px;margin:0 auto;padding-left:max(20px, env(safe-area-inset-left, 0px));padding-right:max(20px, env(safe-area-inset-right, 0px))}
+
+/* opening */
+.intro{position:fixed;inset:0;z-index:50;background:var(--tea);display:grid;place-items:center;transition:background-color .9s ease .2s}
+.intro.leaving{background:rgba(222,246,202,0);pointer-events:none}
+.intro-logo{width:min(680px,84vw);transform-origin:0 0;transition:transform 1.15s cubic-bezier(.65,0,.25,1)}
+.logo-draw{width:100%;height:auto;display:block}
+.skip{position:fixed;right:max(18px, env(safe-area-inset-right, 0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:51;border:1.5px solid var(--blue);background:var(--tea);padding:7px 12px;font-size:14px;font-weight:500;cursor:pointer;border-radius:0}
+.intro.leaving + .skip{display:none}
+
+/* header */
+header{position:relative;z-index:3}
+header .in{display:flex;justify-content:space-between;align-items:center;padding-block:20px}
+.hlogo{height:38px;width:auto;display:block;visibility:hidden}
+.hlogo.on{visibility:visible}
+.btn{border:0;border-radius:0;background:var(--blue);color:var(--white);padding:13px 20px;font-weight:500;font-size:15.5px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--berry)}
+.btn.small{padding:9px 14px;font-size:14.5px}
+
+header .in{justify-content:center}
+
+/* the trail sits behind everything you read */
+main{position:relative}
+.trail{position:absolute;left:0;top:0;width:100%;pointer-events:none;z-index:0;overflow:visible}
+.trail path{fill:none;stroke:none}
+/* the trail is laid in soft, uneven dabs, wet when laid and drying paler over a few seconds */
+.trail ellipse{fill:#FFFFFF;transition:opacity 9s ease-out}
+/* on the white map a white trail wouldn't show, so there it's a faint wet blue */
+#townDabs ellipse{fill:var(--blue)}
+.crawler{position:absolute;left:0;top:0;width:86px;height:auto;z-index:1;pointer-events:none;will-change:transform;opacity:0;transition:opacity .6s;transform-origin:50% 92%;filter:url(#boil)}
+.crawler.on{opacity:1}
+section{position:relative;z-index:2}
+
+/* one idea per screen */
+.idea{min-height:92vh;display:grid;align-content:center;gap:24px;padding-block:80px}
+.idea h2,.hero h1{font-size:clamp(50px,9.5vw,128px)}
+.idea p,.hero p{font-size:clamp(18px,1.9vw,23px);max-width:40ch;color:var(--muted)}
+.kick{font-size:14.5px;font-weight:560;color:var(--berry)}
+.zoom{transform-origin:0 60%;will-change:transform}
+.idea h2.long{font-size:clamp(40px,7vw,92px);max-width:13ch}
+.right{justify-items:end;text-align:right}
+.right p{justify-self:end}
+
+/* the map that zooms in on one place */
+.mapzoom{height:260vh;position:relative}
+.mapzoom .stick{position:sticky;top:0;height:100vh;display:grid;align-content:center;gap:22px}
+.frame{width:min(760px,100%);aspect-ratio:8/5;max-width:100%;overflow:hidden;background:var(--white);border:1.5px solid var(--blue);position:relative;justify-self:center}
+.frame svg{width:100%;height:100%;display:block;transform-origin:70% 60%;will-change:transform}
+.cap{justify-self:center;text-align:center;display:grid;gap:6px;min-height:6.5em;max-width:34ch}
+.cap h3{font-size:clamp(26px,3.4vw,38px);font-weight:560;letter-spacing:-.04em;line-height:1.1}
+.cap p{color:var(--muted);font-size:17px}
+.dist{position:absolute;left:12px;top:10px;background:var(--white);border:1.5px solid var(--blue);font-size:13px;font-weight:500;padding:3px 8px;font-variant-numeric:tabular-nums}
+
+/* studio strip */
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;width:min(760px,100%)}
+.stage{background:var(--lav);padding:8px 8px 10px;display:grid;gap:6px;transform-origin:50% 80%;will-change:transform}
+.stage .slot{display:block;aspect-ratio:4/3;max-width:100%;border:1.5px dashed #C9B3E6;background:#FBF4FE}
+.stage small{font-size:13px;font-weight:500;font-variant-numeric:tabular-nums}
+@media (max-width:560px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* places list */
+.places{list-style:none;margin:0;padding:0;width:min(640px,100%);border-top:1.5px solid var(--blue)}
+.places li{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:14px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)}
+.places .r{font-size:22px;font-weight:560;color:var(--berry);font-variant-numeric:tabular-nums}
+.places b{font-weight:560;font-size:19px;letter-spacing:-.02em}
+.places small{display:block;color:var(--muted);font-size:14.5px}
+.places .v{font-size:14.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* waitlist */
+.join{display:grid;gap:10px;width:min(540px,100%)}
+.join .row{display:flex;border:1.5px solid var(--blue);background:var(--white)}
+.join .field{flex:1;min-width:0;position:relative;display:flex}
+.join input{flex:1;min-width:0;border:0;background:none;padding:13px 14px;font-size:16px}
+/* the placeholder, with a gap where the snail lands and becomes the @ */
+.hint{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:#7C9AA3;pointer-events:none;display:flex;align-items:center;white-space:nowrap}
+.hint .at{display:inline-block;width:26px;height:1em}
+.field.typed .hint{visibility:hidden}
+.join input:focus{outline:none}
+.join small{font-size:14px;color:var(--muted)}
+.join .btn[aria-busy]{cursor:progress}
+
+/* loading: the @ from the logo draws itself round its spiral, rubs out, and goes again while slowly turning */
+.swirl{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.25em}
+.swirl svg{width:100%;height:100%;display:block;overflow:visible}
+.swirl path{fill:none;stroke:currentColor;stroke-width:40;stroke-linecap:round;stroke-linejoin:round}
+.swirl .ghost{opacity:.18}
+.swirl .ink{stroke-dasharray:1 1.2;animation:swirl-draw 1.8s cubic-bezier(.65,0,.35,1) infinite}
+.swirl g{transform-origin:476px 240px;animation:swirl-turn 3.6s linear infinite}
+@keyframes swirl-draw{from{stroke-dashoffset:1.1}to{stroke-dashoffset:-1.1}}
+@keyframes swirl-turn{to{transform:rotate(360deg)}}
+/* while the logo picture loads, the swirl waits where the @ will be drawn */
+.logo-wait{position:relative;aspect-ratio:862/356;color:var(--orange)}
+.logo-wait .swirl{position:absolute;left:42.7%;top:33.7%;width:26.9%;height:auto;aspect-ratio:232/240}
+@media (prefers-reduced-motion:reduce){.swirl g{animation:none}.swirl .ink{animation-duration:4s}}
+@media (max-width:520px){.join .row{flex-direction:column}.join .btn{width:100%}}
+footer .in{padding-block:30px 44px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font-size:14px;color:var(--muted)}
+footer .daypick{order:-1;flex-basis:100%;width:auto;justify-items:center;text-align:center;margin-bottom:16px}
+
+
+/* ---------- the world: the ground, the light and the time of day ---------- */
+body{background:var(--ground,var(--tea));transition:background-color .6s}
+.w-ground,.w-air{transition:opacity .6s}
+/* the words sit on a soft pool of the ground colour, so the moss and stones never get in the way of reading */
+.idea>*:not(.strip):not(.places):not(.join),.cap{text-shadow:0 0 18px var(--ground,var(--tea)),0 0 6px var(--ground,var(--tea))}
+/* night: moonlit ground, pale words */
+html.w-night{--blue:#D7ECF2;--muted:#9FC0C2;--berry:#F1A9D6;--line:#35514A;--lav:#2B3542;--orange:#F59A5E}
+html.w-night .btn{color:#0B2A36}
+html.w-night .btn:hover{background:#F1A9D6}
+html.w-night .join .row{color:#0B4F6C}
+html.w-night .stage .slot{background:#323D4C;border-color:#56637A}
+html.w-night .skip{color:#0B4F6C}
+/* time-of-day preview */
+.daypick{display:grid;gap:8px;width:min(380px,100%);font-size:13.5px;color:var(--muted)}
+.daypick output{color:var(--blue);font-weight:500;font-variant-numeric:tabular-nums}
+.daybtns{display:flex;flex-wrap:wrap;gap:6px}
+.daybtns button{font-size:13px;font-weight:500;border:1.5px solid var(--blue);background:transparent;color:var(--blue);padding:6px 10px;cursor:pointer;touch-action:manipulation}
+.daybtns button[aria-pressed="true"]{background:var(--blue);color:var(--ground,var(--tea))}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.intro-logo,.intro{transition:none}}
+
+/* one screen, no scrolling */
+html,body{height:100%;overflow:hidden}
+body{display:flex;flex-direction:column}
+main{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-evenly}
+main>section{width:100%}
+main>.idea{min-height:0;padding-block:0;gap:clamp(8px,2vh,24px)}
+.idea h2,.hero h1{font-size:clamp(36px,min(9.5vw,13vh),128px)}
+.idea h2.long{font-size:clamp(28px,min(7vw,8vh),92px)}
+
+</style>
+<noscript><style>.intro,.skip{display:none}.hlogo{visibility:visible}</style></noscript>
+</head>
+<body>
+
+<div class="intro" id="intro"><div class="intro-logo" id="introLogo"></div></div>
+<button class="skip" id="skip" type="button">Skip</button>
+
+<header><div class="in"><img class="hlogo" id="hlogo" src="img/wordmark.png" alt="Snale"></div></header>
+
+<main id="main">
+  <!-- the boil: a tiny wobble that changes every frame, like a drawing redone by hand for each frame -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="boil" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence id="boilNoise" type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="1"/><feDisplacementMap in="SourceGraphic" scale="3.2" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
+  <svg class="trail" id="trail" aria-hidden="true"><path id="tPath"/><g id="dabs"></g></svg>
+  <img class="crawler" id="crawler" src="img/snail.png" alt="">
+
+  <section class="in idea hero">
+    <span class="kick">A social app for artists, with no AI in it</span>
+    <h1 class="zoom">Slow down.</h1>
+    <p>Snale moves at a snail's pace. No endless feed, no like counts, and nothing made by a machine. Just people making things, and the places that gave them the idea.</p>
+  </section>
+
+    <section class="in idea" id="join">
+    <div class="join" id="joinBox"></div>
+  </section>
+  <div hidden><div class="mapzoom" id="mapzoom"><div class="frame"><svg id="town"></svg><span class="dist" id="dist"></span></div><div class="cap" id="cap"></div></div><div id="strip"></div></div>
+
+
+</main>
+<footer><div class="in"><span>Made by hand. © 2026 Snale.</span><span>Free, no ads, and your data is never sold.</span><div class="daypick"><span>The light follows your clock: <output id="dayOut"></output></span><div class="daybtns" id="dayBtns" role="group" aria-label="Preview a time of day"></div></div></div></footer>
+
+<script>
+(function(){
+  const $=s=>document.querySelector(s);
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp=v=>Math.min(1,Math.max(0,v)), ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+
+  // ---------- the logo draws itself ----------
+  const AT_PATH='M494 206 C470 190,440 200,432 232 C424 262,446 276,466 262 C482 250,490 228,494 208 C496 232,498 252,512 258 C536 266,552 236,548 206 C542 160,500 144,466 148 C420 152,394 190,396 236 C398 290,420 330,470 334 C512 336,544 312,572 302';
+  const SWIRL=`<span class="swirl" role="img" aria-label="Loading"><svg viewBox="368 120 232 240" aria-hidden="true"><g><path class="ghost" d="${AT_PATH}"/><path class="ink" pathLength="1" d="${AT_PATH}"/></g></svg></span>`;
+  const LOGO_PARTS={head:[[262,0,294,140],[338,140,218,110],[352,250,226,106]],n:[[148,0,114,356],[262,140,76,110],[262,250,90,106]],L:[[556,0,126,250],[578,250,134,106]],s:[[0,0,148,356]],e:[[682,0,180,250],[712,250,150,106]]};
+  const LOGO_LETTERS=[['n',1.85],['L',1.97],['s',2.12],['e',2.24]];
+  function mountLogo(host, done){
+    const W=862, H=356, P=new Path2D(AT_PATH);
+    const sv=document.createElementNS('http://www.w3.org/2000/svg','svg'), pe=document.createElementNS('http://www.w3.org/2000/svg','path');
+    sv.setAttribute('style','position:absolute;width:0;height:0'); pe.setAttribute('d',AT_PATH); sv.appendChild(pe); document.body.appendChild(sv); const LEN=pe.getTotalLength();
+    const PTS=[]; for(let s=0;s<=LEN;s+=2){ const q=pe.getPointAtLength(s); PTS.push([q.x,q.y,s]); } sv.remove();
+    const cv=document.createElement('canvas'); cv.className='logo-draw'; cv.setAttribute('role','img'); cv.setAttribute('aria-label','Snale'); cv.width=W; cv.height=H;
+    host.innerHTML=`<div class="logo-wait">${SWIRL}</div>`;   // until the picture arrives
+    const inout=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2, out=t=>1-Math.pow(1-t,3), back=t=>1+2.2*Math.pow(t-1,3)+1.2*Math.pow(t-1,2);
+    const pen=c=>{ c.lineWidth=46; c.lineCap='round'; c.lineJoin='round'; c.strokeStyle='#fff'; };
+    const layer=()=>{ const c=document.createElement('canvas'); c.width=W; c.height=H; return c; };
+    const img=new Image(); img.src='img/wordmark.png';
+    img.onload=()=>{
+      host.replaceChildren(cv);
+      const bc=layer().getContext('2d'); bc.drawImage(img,0,0);
+      let A; try{ A=bc.getImageData(0,0,W,H).data; }catch(e){ cv.getContext('2d').drawImage(img,0,0); done(); return; }
+      const KEYS=['shell','head','n','L','s','e'], N=W*H, owner=new Uint8Array(N), seen=new Uint8Array(N);
+      const vote=(x,y)=>{ for(const k in LOGO_PARTS) for(const [rx,ry,rw,rh] of LOGO_PARTS[k]) if(x>=rx&&x<rx+rw&&y>=ry&&y<ry+rh) return k; return 's'; };
+      for(let i=0;i<N;i++){ if(seen[i]||!A[i*4+3]) continue;
+        const ink=[i], votes={}; seen[i]=1;
+        for(let j=0;j<ink.length;j++){ const p=ink[j], x=p%W, y=(p-x)/W, k=vote(x,y); votes[k]=(votes[k]||0)+1;
+          for(const q of [x>0?p-1:-1, x<W-1?p+1:-1, y>0?p-W:-1, y<H-1?p+W:-1]) if(q>=0&&!seen[q]&&A[q*4+3]){ seen[q]=1; ink.push(q); } }
+        const k=Object.keys(votes).reduce((a,b)=>votes[a]>=votes[b]?a:b);
+        for(const p of ink){ const x=p%W, y=(p-x)/W; owner[p]=KEYS.indexOf(k==='L'||k==='e' ? (x<682||y>256+(x-682)*.08 ? 'L' : 'e') : k); } }
+      const mc=layer().getContext('2d'); pen(mc); mc.lineWidth=96; mc.stroke(P); const M=mc.getImageData(0,0,W,H).data;
+      const shell=[];
+      for(let p=0;p<N;p++) if(owner[p]===1 && M[p*4+3]>127){ owner[p]=0;
+        const x=p%W, y=(p-x)/W; let best=1e9, s=0; for(const [px,py,ps] of PTS){ const dd=(px-x)*(px-x)+(py-y)*(py-y); if(dd<best){ best=dd; s=ps; } } shell.push([s,p]); }
+      shell.sort((a,b)=>a[0]-b[0]);
+      const part={}; KEYS.forEach((k,id)=>{ if(!id) return; const d=new ImageData(W,H);
+        for(let p=0;p<N;p++) if(owner[p]===id && A[p*4+3]){ const o=p*4; d.data[o]=A[o]; d.data[o+1]=A[o+1]; d.data[o+2]=A[o+2]; d.data[o+3]=A[o+3]; }
+        const c=layer(); c.getContext('2d').putImageData(d,0,0); part[k]=c; });
+      const at=layer(), ac=at.getContext('2d'), sd=new ImageData(W,H); let drawn=0;
+      const t0=performance.now(), speed=still?3:1;
+      const frame=now=>{
+        if(!cv.isConnected) return;
+        const t=(now-t0)/1000*speed;
+        const dpr=Math.min(3,window.devicePixelRatio||1), cw=Math.round((cv.clientWidth||W)*dpr);
+        if(cv.width!==cw){ cv.width=cw; cv.height=Math.round(cw*H/W); }
+        const c=cv.getContext('2d'), sc=cv.width/W; c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,cv.width,cv.height); c.setTransform(sc,0,0,sc,0,0);
+        const d=inout(clamp((t-.25)/1.3))*LEN;
+        if(drawn<shell.length && shell[drawn][0]<=d){
+          while(drawn<shell.length && shell[drawn][0]<=d){ const o=shell[drawn++][1]*4; for(let b=0;b<4;b++) sd.data[o+b]=A[o+b]; }
+          ac.putImageData(sd,0,0); }
+        if(drawn) c.drawImage(at,0,0);
+        const h=out(clamp((t-1.3)/.7));
+        if(h>0){ const top=H-h*H; c.save(); c.beginPath(); c.rect(0,top,W,H); c.clip(); c.drawImage(part.head,0,still?0:(1-h)*26); c.restore(); }
+        for(const [k,start] of LOGO_LETTERS){ const q=clamp((t-start)/.6); if(q<=0) continue;
+          c.globalAlpha=out(q); c.drawImage(part[k],0,still?0:(1-back(q))*22); c.globalAlpha=1; }
+        if(t<3.1) requestAnimationFrame(frame); else done();
+      };
+      requestAnimationFrame(frame);
+    };
+  }
+
+  // ---------- the opening: draw, hold a moment, then shrink into the header ----------
+  const intro=$('#intro'), il=$('#introLogo'), hl=$('#hlogo');
+  let finished=false;
+  document.body.classList.add('intro-on');
+  function land(){
+    if(finished) return; finished=true;
+    const a=il.getBoundingClientRect(), b=hl.getBoundingClientRect();
+    il.style.transform=`translate(${b.left-a.left}px,${b.top-a.top}px) scale(${b.width/a.width})`;
+    intro.classList.add('leaving'); $('#skip').remove();
+    setTimeout(()=>{ hl.classList.add('on'); intro.remove(); document.body.classList.remove('intro-on'); $('#crawler').classList.add('on'); build(); }, still?0:1200);
+  }
+  mountLogo(il, ()=>setTimeout(land, still?0:500));
+  setTimeout(land, 6000);   // never leave someone stuck on the opening
+  $('#skip').addEventListener('click', land);
+
+  // ---------- waitlist ----------
+  const jb=$('#joinBox');
+  jb.innerHTML=`<form novalidate style="display:grid;gap:10px"><div class="row"><label for="em" style="position:absolute;left:-9999px">Email address</label><span class="field"><input type="email" id="em" aria-label="Email address" autocomplete="email" maxlength="254"><span class="hint" id="hint" aria-hidden="true">yourname<span class="at" id="atSpot"></span>email.com</span></span><button class="btn" type="submit">Join the waitlist</button></div><small>One email when Snale reaches your city. Never shared or sold.</small></form>`;
+  jb.querySelector('form').addEventListener('submit',e=>{ e.preventDefault(); const v=$('#em').value.trim(), s=jb.querySelector('small');
+    if(v.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){ s.textContent='Enter an email address like name@example.com.'; s.style.color='var(--berry)'; return; }
+    const b=jb.querySelector('.btn'); if(b.hasAttribute('aria-busy')) return;
+    b.setAttribute('aria-busy','true'); b.innerHTML=`${SWIRL} Joining`;
+    fetch('https://docs.google.com/forms/d/e/1FAIpQLSffUoyS842b5xN0CezWZ2m1syUydVoSymKMfokbD4h2itdgiQ/formResponse',{
+      method:'POST', mode:'no-cors',
+      body:new URLSearchParams({'entry.1223247247':v})
+    }).then(()=>{
+      // the address is added as text, never as HTML
+      const ok=document.createElement('small'); ok.style.cssText='font-weight:560;color:var(--blue)';
+      ok.textContent=`You're on the list. We'll write to ${v} when Snale reaches you.`;
+      jb.replaceChildren(ok);
+    }).catch(()=>{
+      b.removeAttribute('aria-busy'); b.textContent='Join the waitlist';
+      s.textContent='Something went wrong. Check your connection and try again.'; s.style.color='var(--berry)';
+    });
+  });
+
+  // ---------- the town map that zooms in on one place ----------
+  const blocks=[]; for(let r=0;r<7;r++)for(let c=0;c<11;c++){ if((r*5+c*3)%9===2) continue; blocks.push(`<rect x="${8+c*74+(r%2?10:0)}" y="${6+r*72}" width="${54+((r+c)%3)*6}" height="${52+((r*c)%3)*5}" fill="#E4F6D6"/>`); }
+  const drop=(x,y,c,s=1)=>`<g transform="translate(${x} ${y}) scale(${s})"><path d="M0 0 C-3 -6 -11 -11 -11 -19 A11 11 0 1 1 11 -19 C11 -11 3 -6 0 0Z" fill="${c}" stroke="#fff" stroke-width="2"/><circle cy="-19" r="4" fill="#fff"/></g>`;
+  $('#town').innerHTML=`<rect width="800" height="500" fill="#FFFFFF"/>${blocks.join('')}
+    <path d="M40 300 Q120 260 200 280 L214 360 Q130 396 50 376Z" fill="#C2E5A2"/>
+    <path d="M-30 190 C140 170,300 260,430 248 S650 330,830 296" fill="none" stroke="#B5D7DF" stroke-width="34" stroke-linecap="round"/>
+    <path d="M556 300 l12 0" stroke="#0B4F6C" stroke-width="3"/>
+    <path d="M-10 452 C200 430,500 424,810 396" fill="none" stroke="#F5E5FC" stroke-width="12"/>
+    <path d="M480 -10 C466 140,494 320,474 510" fill="none" stroke="#F5E5FC" stroke-width="12"/>
+    <path d="M474 470 C500 420,520 360,560 312" fill="none" stroke="#9D3E7F" stroke-width="2.5" stroke-dasharray="1 6" stroke-linecap="round"/>
+    ${drop(150,150,'#F68A4C')}${drop(250,330,'#0B4F6C')}${drop(660,160,'#9D3E7F')}${drop(380,420,'#6E8B3D')}${drop(720,420,'#F68A4C')}${drop(310,90,'#9D3E7F')}
+    ${drop(560,300,'#F68A4C',1.3)}${drop(584,312,'#0B4F6C',.9)}
+    <g id="townDabs"></g>`;
+  const CAPS=[['Whole town','This is your town.','Every pin is something an artist saw, made or went to.'],['Your street','This is your street.','A mural, a supply shop, a sketch walk on Saturday.'],['6 min walk','This is a spot near you.','Pinned by the artists around you, along with what they made from it.']];
+  let capAt=-1;
+
+  // ---------- studio strip: empty photo slots, so no made-up artwork stands in for real people's ----------
+  $('#strip').innerHTML=['Photo 1','Photo 2','Photo 3','Photo 4'].map(d=>`<div class="stage"><span class="slot"></span><small>${d}</small></div>`).join('');
+
+  // ---------- the snail's path: wide, slow S-bends from side to side, with two round loops ----------
+  // Every bend leaves and arrives heading straight down, so the curve never kinks. Rebuilt when the page changes size.
+  const main=$('#main'), trail=$('#trail'), path=$('#tPath'), dabs=$('#dabs'), crawler=$('#crawler'), noise=$('#boilNoise');
+  let samples=[], total=0, cur=0, laid=0, built=false;
+  const mapSpan=[0,0], townDabs=$('#townDabs'), frame=$('.frame');   // the stretch of path that crosses the map, and where its trail goes
+  const nest={x:0,y:0,perch:0}, SMALL=26/86;   // the snail's size when it's the @ in the email box
+  // once you start typing, it climbs out of the way and sits on top of the box
+  $('#em').addEventListener('input',e=>$('.field').classList.toggle('typed',!!e.target.value));
+  function build(){
+    const W=main.clientWidth, H=main.scrollHeight, secs=[...main.querySelectorAll('section')];
+    trail.setAttribute('width',W); trail.setAttribute('height',H); trail.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    const edge=Math.max(34,Math.min(160,(W-1040)/2+80)), r=Math.max(34,Math.min(80,W*.06));
+    let x=W*.6, y=30, d=`M${x} ${y}`;
+    const mr=main.getBoundingClientRect(), vh=innerHeight;
+    secs.forEach((s,i)=>{
+      // the map stays put on screen while you scroll past it, so here the path runs across it from side to side:
+      // the snail crawls over the town, from one edge of the map to the other, while the map zooms in
+      if(s.id==='mapzoom'){
+        const fr=$('.frame').getBoundingClientRect(), fx0=fr.left-mr.left+40, fx1=fr.right-mr.left-40;
+        const y0=s.offsetTop+vh*.58, y1=s.offsetTop+s.offsetHeight-vh*.42, k0=(y0-y)*.55, m=(y1-y0)/3;
+        d+=` C${x} ${y+k0},${fx0-60} ${y0},${fx0} ${y0}`;
+        path.setAttribute('d',d); mapSpan[0]=path.getTotalLength()-20;
+        d+=` C${fx0+(fx1-fx0)*.5} ${y0+m*.6},${fx0+(fx1-fx0)*.3} ${y1-m*1.2},${fx1} ${y1}`;
+        path.setAttribute('d',d); mapSpan[1]=path.getTotalLength();
+        x=fx1; y=y1; return; }
+      const nx=i%2?edge:W-edge, ny=s.offsetTop+s.offsetHeight*.5, k=(ny-y)*.55;
+      d+=` C${x} ${y+k},${nx} ${ny-k},${nx} ${ny}`; x=nx; y=ny;
+      // a loop, as if the snail turned round to look at something; it bulges toward the middle of the page
+    });
+    // the trail ends in the email box: the snail lands in the gap between "yourname" and "email.com"
+    const spot=$("#atSpot"), em=$("#em");
+    if(spot){ const ar=spot.getBoundingClientRect(), fr=em.getBoundingClientRect();
+    nest.x=ar.left+ar.width/2-mr.left; nest.y=ar.top+ar.height*.95-mr.top; nest.perch=fr.top-mr.top+2; }
+    const k=(nest.y-y)*.55; d+=` C${x} ${y+k},${nest.x} ${nest.y-k*1.4},${nest.x} ${nest.y}`;
+    path.setAttribute('d',d);
+    total=path.getTotalLength(); samples=[];
+    let maxY=-1e9; for(let s=0;s<=total;s+=6){ const q=path.getPointAtLength(s); maxY=Math.max(maxY,q.y); samples.push([s,q.x,q.y,maxY]); }
+    dabs.replaceChildren(); townDabs.replaceChildren(); laid=Math.min(laid,cur); laid=0; cur=Math.min(cur,total);
+    built=true;
+  }
+  // a dab of trail: a little wet smear lying along the path, never two quite the same
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  // where the snail is drawn, in page pixels. Off the map that's just the path. The map stays still on screen while
+  // you scroll past it, so there the snail is pinned to the map instead of the page, or it would bob up every time
+  // you scrolled and crawl back down. It eases from one to the other as it climbs on and off.
+  function where(at){
+    const p=path.getPointAtLength(at), t=(at-mapSpan[0])/(mapSpan[1]-mapSpan[0]||1);
+    if(t<=0||t>=1) return {x:p.x,y:p.y};
+    const fr=frame.getBoundingClientRect(), mr=main.getBoundingClientRect();
+    const onY=fr.top+fr.height*(.74-.14*Math.sin(t*Math.PI))-mr.top, b=ease(clamp(Math.min(t,1-t)/.12));
+    return {x:p.x, y:p.y+(onY-p.y)*b};
+  }
+  function dab(at){
+    const p=path.getPointAtLength(at), q=path.getPointAtLength(Math.min(total,at+3)), ang=Math.atan2(q.y-p.y,q.x-p.x)*180/Math.PI;
+    const e=document.createElementNS('http://www.w3.org/2000/svg','ellipse'), o=rnd(.2,.34);
+    // on the map the trail is drawn onto the town itself, so it stays on the streets it crossed as the map zooms.
+    // Fewer dabs there, and no slow fade: the map is redrawn whenever anything on it changes.
+    if(at>mapSpan[0] && at<mapSpan[1]){
+      if((at/7)%2>1) return;
+      const town=$('#town'), m=town.getScreenCTM(), mr=main.getBoundingClientRect(), w=where(at);
+      const t=new DOMPoint(w.x+mr.left,w.y+mr.top).matrixTransform(m.inverse()), s=1/m.a;
+      if(t.x>0 && t.x<800 && t.y>0 && t.y<500){
+        e.setAttribute('cx',t.x.toFixed(1)); e.setAttribute('cy',t.y.toFixed(1));
+        e.setAttribute('rx',(rnd(5,8)*s).toFixed(2)); e.setAttribute('ry',(rnd(2.6,4.4)*s).toFixed(2));
+        e.setAttribute('transform',`rotate(${rnd(-12,12).toFixed(0)} ${t.x.toFixed(1)} ${t.y.toFixed(1)})`);
+        e.style.opacity=(o*.5).toFixed(2); townDabs.appendChild(e);
+        return; } }
+    e.setAttribute('cx',(p.x+rnd(-1.5,1.5)).toFixed(1)); e.setAttribute('cy',(p.y+rnd(-1.5,1.5)).toFixed(1));
+    e.setAttribute('rx',rnd(6,10).toFixed(1)); e.setAttribute('ry',rnd(3.2,5.6).toFixed(1));
+    e.setAttribute('transform',`rotate(${(ang+rnd(-12,12)).toFixed(0)} ${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
+    e.style.opacity=o; dabs.appendChild(e);
+    if(Math.random()<.22){ const g=e.cloneNode(); g.setAttribute('rx',rnd(1.2,2.4).toFixed(1)); g.setAttribute('ry','1'); g.style.opacity=.65; dabs.appendChild(g);
+      setTimeout(()=>{ g.style.opacity=.25; },200); }
+    setTimeout(()=>{ e.style.opacity=(o*.5).toFixed(2); },200);   // then it dries
+  }
+  // where the snail wants to be: the point on the path level with a spot just below the middle of the screen
+  function targetLen(){
+    if(document.documentElement.scrollHeight<=innerHeight+1) return total*.5;   // no scrolling: rest halfway along the trail
+    if(scrollY+innerHeight>=document.documentElement.scrollHeight-60) return total;   // at the bottom: go and land
+    const y=scrollY+innerHeight*.58-main.offsetTop;
+    let lo=0, hi=samples.length-1; while(lo<hi){ const m=(lo+hi)>>1; if(samples[m][3]<y) lo=m+1; else hi=m; }
+    return samples[lo][0];
+  }
+  // Movement runs smoothly underneath, but what you see only changes 12 times a second, like stop-motion shot on twos.
+  const FPS=12;
+  // face runs from 1 (facing left, as drawn) to -1 (facing right); turning takes a few frames instead of flipping at once
+  let last=performance.now(), shown=0, gait=0, tiltS=0, facingRight=false, face=1, wantRight=false, held=0, boil=0, sqS=0, liftS=0;
+  // the drawing's weight sits right of its middle (the shell), so it's nudged left by this share of its width to look centred
+  const OPTICAL=.06;
+  function tick(now){
+    const dt=Math.min(.05,(now-last)/1000); last=now;
+    if(built){
+      // a steady crawl toward where you've scrolled; it only hurries when it has fallen well behind
+      const diff=targetLen()-cur, far=Math.abs(diff)>innerHeight*.7;
+      const speed=still?1e6:130*(.75+.25*Math.max(0,Math.sin(gait)));
+      const step=Math.sign(diff)*Math.min(Math.abs(diff),speed*dt);
+      cur+=step; gait+=Math.abs(step)/26;
+      while(laid<cur-7 && laid<total-60){ laid+=7; dab(laid); }   // no trail inside the email box
+    }
+    // On the map the snail is pinned to the map, so it has to keep up with scrolling every frame. Its pose
+    // (wobble, turn, stretch) still only changes 12 times a second.
+    const pose=now-shown>=1000/FPS, mapNow=built && cur>mapSpan[0]-400 && cur<mapSpan[1]+400;
+    if(pose) shown=now;
+    if(built && (pose || mapNow)){
+      if(pose) noise.setAttribute('seed', 1+(boil=(boil+1)%3));   // three slightly different drawings, cycled
+      const p=where(cur), q=path.getPointAtLength(Math.min(total,cur+60)), pp=path.getPointAtLength(cur);
+      const dx=q.x-pp.x, dy=q.y-pp.y;
+      // over the last stretch it shrinks to the size of a letter, settles upright, and comes in front of the box
+      const near=clamp((cur-(total-320))/300), ease2=ease(near), size=1-(1-SMALL)*ease2, landed=cur>=total-1;
+      const onMap=cur>mapSpan[0] && cur<mapSpan[1];
+      if(pose){
+        // it only turns round when the path has clearly changed direction for half a second, and it turns to face
+        // left before it reaches the box, so it never flips on arrival
+        const want=near>0 ? false : dx>20 ? true : dx<-20 ? false : wantRight;
+        if(want!==wantRight){ held++; if(held>=6){ wantRight=want; held=0; } } else held=0;
+        if(near>0) wantRight=false;
+        facingRight=wantRight;
+        face+=Math.max(-.5,Math.min(.5,(facingRight?-1:1)-face));   // a turn in four frames: 1, .5, 0, -.5, -1
+        // the drawing faces left; lean it gently with the slope, never more than 14°
+        let tilt=Math.atan2(dy,Math.abs(dx)+30)*180/Math.PI*(face<0?1:-1)*.5; tilt=Math.max(-14,Math.min(14,tilt));
+        // on the map it crawls level across the screen, so it shouldn't lean
+        if(onMap) tilt=0;
+        tiltS+=(tilt-tiltS)*.35;
+        if(landed) tiltS=0;
+        // the body stretches forward and bunches back as it crawls
+        sqS=landed?0:Math.sin(gait)*(1-near);
+      }
+      const sx=1+.07*Math.max(0,sqS), sy=1-.045*Math.max(0,sqS);
+      const w=crawler.offsetWidth, h=crawler.offsetHeight;
+      // once you type, it climbs up onto the top edge of the box a step at a time, instead of jumping there
+      const fld=$(".field"), wantLift=landed && fld && fld.classList.contains("typed") ? nest.perch-nest.y : 0;
+      if(pose) liftS+=Math.abs(wantLift-liftS)<1 ? wantLift-liftS : (wantLift-liftS)*.28;
+      const lift=liftS;
+      // mid-turn the snail is seen edge-on, so it never goes thinner than a quarter of its width
+      const fx=(face<0?-1:1)*Math.max(.25,Math.abs(face)), nudge=-OPTICAL*w*size*(face<0?-1:1);
+      // it comes in front of the map whenever any part of it is over the map, including on the way on and off
+      const fr=frame.getBoundingClientRect(), mr=main.getBoundingClientRect(), cx=p.x+mr.left, cy=p.y+mr.top;
+      const overMap=cx+w/2>fr.left && cx-w/2<fr.right && cy>fr.top && cy-h<fr.bottom;
+      crawler.style.zIndex=near>0||onMap||overMap?3:1;
+      crawler.style.transform=`translate(${(p.x-w/2+nudge).toFixed(0)}px,${(p.y+lift-h*.92).toFixed(0)}px) rotate(${(tiltS*(1-near)).toFixed(1)}deg) scale(${(fx*sx*size).toFixed(3)},${(sy*size).toFixed(3)})`;
+    }
+    // words grow a little as they reach the middle of the screen, and ease back as they leave
+    document.querySelectorAll('.zoom').forEach(el=>{ const r=el.getBoundingClientRect(), c=(r.top+r.height/2)/innerHeight;
+      const k=still?1:.86+.18*Math.max(0,1-Math.abs(c-.5)*1.6); el.style.transform=`scale(${k.toFixed(3)})`; });
+    document.querySelectorAll('.stage').forEach((el,i)=>{ const r=el.getBoundingClientRect(), v=clamp((innerHeight-r.top)/(innerHeight*.5)-i*.18);
+      el.style.transform=still?'':`translateY(${(1-ease(v))*24}px) scale(${(.9+.1*ease(v)).toFixed(3)})`; });
+    // the map: zoom in on the weir, then pull back a little as you leave
+    const mz=$('#mapzoom'), r=mz.getBoundingClientRect(), pr=clamp(-r.top/(r.height-innerHeight));
+    const zin=ease(clamp(pr/.72)), zout=ease(clamp((pr-.86)/.14));
+    $('#town').style.transform=`scale(${(1+3.2*zin-1.2*zout).toFixed(3)})`;
+    const ci=pr<.3?0:pr<.62?1:2; if(ci!==capAt){ capAt=ci; $('#dist').textContent=CAPS[ci][0]; $('#cap').innerHTML=`<h3>${CAPS[ci][1]}</h3><p>${CAPS[ci][2]}</p>`; }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  let rt; addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(built) build(); },150); });
+  addEventListener('load',()=>{ if(built) build(); });
+  // Geist arriving late moves the gap in the email box, so measure again once it's in
+  document.fonts && document.fonts.ready.then(()=>{ if(built) build(); });
+})();
+</script>
+<script>
+// ---------- the ground: the world the snail crawls through ----------
+// The page is the ground seen from the snail's height: moss, pebbles, clover, fallen leaves and tiny flowers,
+// scattered once and scrolling past with the page. Each thing casts a soft shadow away from the sun, so the shadows
+// are long and low at dawn and in the evening and short at midday. Light falls through leaves overhead in slow,
+// drifting patches. The light follows the viewer's clock: rosy at dawn, clear by day, golden in the evening,
+// lilac at dusk, and moonlit at night, with a few fireflies. Reduced motion keeps the scene but stops the drift.
+(function(){
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const root=document.documentElement;
+  const T=(h,m)=>h*60+(m||0);
+  // [minute, ground, light over everything (multiplied), dapple light, dapple strength, sun angle°, sun height 0-1]
+  const LIGHT=[
+    [T(0),    '#1C2E2A','#5F7393','#9FB8D8',.10,  0,  0],
+    [T(5,45), '#22322F','#7A86A6','#B8C4E0',.12,  0,  0],
+    [T(5,55), '#E2F0D3','#F8F0EE','#FFEFE8',.30, 10, .1],
+    [T(6,30), '#E2F0D3','#F8F0EE','#FFEFE8',.30, 15, .15],
+    [T(9),    '#DEF6CA','#FFFFFF','#FFFBEA',.34, 40, .55],
+    [T(13),   '#DEF6CA','#FFFFFF','#FFFFF4',.30, 90, 1],
+    [T(16),   '#DFF4C6','#FFFCF2','#FFF6DA',.36,130, .6],
+    [T(18),   '#E2F3C6','#FFF7E9','#FFEFCC',.42,155, .3],
+    [T(19,30),'#E5EDD0','#FAEDE8','#FFE4D8',.38,170, .12],
+    [T(21),   '#D9E6DA','#E9E8F2','#EEEAF8',.22,180, .02],
+    [T(21,35),'#D9E6DA','#E9E8F2','#EEEAF8',.22,180, .02],
+    [T(21,45),'#1C2E2A','#5F7393','#9FB8D8',.10,  0,  0],
+    [T(24),   '#1C2E2A','#5F7393','#9FB8D8',.10,  0,  0]
+  ];
+  const isNight=m=>m>=T(21,40)||m<T(5,50);
+  const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+  const mixc=(a,b,t)=>'#'+hex(a).map((v,i)=>Math.round(v+(hex(b)[i]-v)*t).toString(16).padStart(2,'0')).join('');
+  function light(m){
+    let i=LIGHT.findIndex(r=>r[0]>m); if(i<1) i=1;
+    const a=LIGHT[i-1], b=LIGHT[i], t=(m-a[0])/(b[0]-a[0]||1), e=t*t*(3-2*t);
+    return {ground:mixc(a[1],b[1],e), tint:mixc(a[2],b[2],e), dapple:mixc(a[3],b[3],e), strength:a[4]+(b[4]-a[4])*e,
+      angle:a[5]+(b[5]-a[5])*e, height:a[6]+(b[6]-a[6])*e};
+  }
+
+  // ---------- layers ----------
+  const mk=(cls,z)=>{ const c=document.createElement('canvas'); c.className=cls; c.setAttribute('aria-hidden','true');
+    c.style.cssText=`position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:${z}`; document.body.prepend(c); return c; };
+  const ground=mk('w-ground',-2), air=mk('w-air',-1);
+  const g=ground.getContext('2d'), a=air.getContext('2d');
+  let W=0, H=0, dpr=1;
+  function size(){ dpr=Math.min(2,devicePixelRatio||1); W=innerWidth; H=innerHeight;
+    for(const c of [ground,air]){ c.width=Math.round(W*dpr); c.height=Math.round(H*dpr); } dirty=true; }
+
+  // ---------- the things on the ground, scattered once with a fixed seed so the page looks the same every visit ----------
+  let seed=11; const rnd=()=>((seed=(seed*16807)%2147483647)/2147483647), pick=arr=>arr[Math.floor(rnd()*arr.length)];
+  const items=[]; let builtFor=0;
+  function scatter(){
+    const docH=Math.max(document.documentElement.scrollHeight, H), wide=Math.max(W,320);
+    if(Math.abs(docH*wide-builtFor)<1) return; builtFor=docH*wide; items.length=0; seed=11;
+    const n=0;   // no ground decorations (moss, pebbles, grass, clover, leaves, flowers)
+    for(let i=0;i<n;i++){
+      const r=rnd(), x=rnd()*wide, y=rnd()*docH, rot=rnd()*Math.PI*2, s=.7+rnd()*.7;
+      // fewer things in the middle column, where the words are
+      const mid=Math.abs(x/wide-.5)<.28; if(mid && rnd()<.6) continue;
+      let k = r<.16?'moss': r<.36?'pebble': r<.62?'grass': r<.76?'clover': r<.89?'leaf':'flower';
+      items.push({k,x,y,rot,s,c:k==='leaf'?pick(['#E7B86C','#D9905A','#BFCB7C','#C9A25E']):k==='pebble'?pick(['#C7D3BC','#B8C7B3','#D3D6C4','#BFC9C9']):k==='flower'?pick(['#FFFFFF','#F5E5FC','#FFF2C9']):'',
+        sway:rnd()*6.28, blades:3+Math.floor(rnd()*4)});
+    }
+    // heaviest things first so grass and flowers sit on top of moss and stones
+    const order={moss:0,pebble:1,leaf:2,clover:3,grass:4,flower:5}; items.sort((p,q)=>order[p.k]-order[q.k]);
+  }
+
+  // ---------- drawing ----------
+  let dirty=true, L=light(T(12)), shadow={dx:0,dy:0,len:0};
+  function shapes(c,it,t,sh){
+    const s=it.s;
+    c.save(); c.translate(it.x, it.y); c.rotate(it.rot);
+    switch(it.k){
+      case 'moss': c.fillStyle=sh||'#C3E6A6'; for(let j=0;j<5;j++){ c.beginPath(); c.ellipse(Math.cos(j*1.3)*7*s,Math.sin(j*1.9)*5*s,(7+j*1.4)*s,(5+j*.8)*s,j,0,7); c.fill(); }
+        if(!sh){ c.fillStyle='#B3DC93'; for(let j=0;j<9;j++){ c.beginPath(); c.arc(Math.cos(j*2.1)*12*s,Math.sin(j*1.7)*8*s,1.6*s,0,7); c.fill(); } } break;
+      case 'pebble': c.fillStyle=sh||it.c; c.beginPath(); c.ellipse(0,0,9*s,6*s,0,0,7); c.fill();
+        if(!sh){ c.fillStyle='rgba(255,255,255,.45)'; c.beginPath(); c.ellipse(-2.5*s,-2*s,4*s,2*s,-.3,0,7); c.fill(); } break;
+      case 'leaf': c.fillStyle=sh||it.c; c.beginPath(); c.moveTo(-12*s,0); c.quadraticCurveTo(0,-8*s,12*s,0); c.quadraticCurveTo(0,8*s,-12*s,0); c.fill();
+        if(!sh){ c.strokeStyle='rgba(120,80,40,.35)'; c.lineWidth=.8; c.beginPath(); c.moveTo(-11*s,0); c.lineTo(14*s,0); c.stroke(); } break;
+      case 'clover': c.fillStyle=sh||'#9FD07F'; for(let j=0;j<3;j++){ const an=j*2.094; c.beginPath(); c.arc(Math.cos(an)*4*s,Math.sin(an)*4*s,4.2*s,0,7); c.fill(); }
+        if(!sh){ c.strokeStyle='rgba(255,255,255,.5)'; c.lineWidth=.8; for(let j=0;j<3;j++){ const an=j*2.094; c.beginPath(); c.arc(Math.cos(an)*4*s,Math.sin(an)*4*s,2*s,an+2.5,an+3.8); c.stroke(); } } break;
+      case 'grass': { c.rotate(-it.rot); c.lineCap='round';
+        for(let j=0;j<it.blades;j++){ const bx=(j-it.blades/2)*2.4*s, h=(11+((j*7)%5)*2.2)*s, lean=(j-it.blades/2)*1.6*s+Math.sin(t*.0012+it.sway+j)*(still?0:1.8)*s;
+          c.strokeStyle=sh||(j%2?'#86BF6A':'#9ACE7C'); c.lineWidth=1.8*s; c.beginPath(); c.moveTo(bx,0); c.quadraticCurveTo(bx+lean*.3,-h*.6,bx+lean,-h); c.stroke(); } break; }
+      case 'flower': c.fillStyle=sh||it.c; for(let j=0;j<5;j++){ const an=j*1.2566; c.beginPath(); c.arc(Math.cos(an)*3.3*s,Math.sin(an)*3.3*s,2.6*s,0,7); c.fill(); }
+        if(!sh){ c.fillStyle='#F6C64C'; c.beginPath(); c.arc(0,0,1.9*s,0,7); c.fill(); } break;
+    }
+    c.restore();
+  }
+  function drawGround(t){
+    g.setTransform(dpr,0,0,dpr,0,0);
+    g.fillStyle=L.ground; g.fillRect(0,0,W,H);
+    const sy=scrollY, night=L.height<=0;
+    // the sun throws shadows away from itself; low sun, long shadows
+    const ang=L.angle*Math.PI/180, len=night?1.2:1.5+(1-L.height)*7;
+    shadow={dx:-Math.cos(ang)*len, dy:Math.max(.8,Math.sin(ang)*len*.35+1.2), len};
+    g.save(); g.translate(0,-sy);
+    const vis=items.filter(it=>it.y>sy-40 && it.y<sy+H+40);
+    // shadows first, all together, so they overlap softly
+    g.save(); g.translate(shadow.dx,shadow.dy); g.globalAlpha=night?.18:.16+(1-L.height)*.1;
+    for(const it of vis) shapes(g,it,t,'#3D5A3A'); g.restore();
+    for(const it of vis) shapes(g,it,t,null);
+    g.restore();
+    // the light over everything: multiplied, so day stays clear and the evening turns gold
+    g.globalCompositeOperation='multiply'; g.fillStyle=L.tint; g.fillRect(0,0,W,H); g.globalCompositeOperation='source-over';
+  }
+  // ---------- light through the leaves, and fireflies at night ----------
+  const spots=Array.from({length:9},(_,i)=>({x:(i*0.37)%1,y:(i*0.61)%1,r:.18+((i*13)%7)/30,p:i*1.7}));
+  const flies=Array.from({length:14},(_,i)=>({x:(i*0.29+.05)%1,y:(i*0.47+.1)%1,p:i*2.3}));
+  function drawAir(t){
+    a.setTransform(dpr,0,0,dpr,0,0); a.clearRect(0,0,W,H);
+    const night=L.height<=0, k=still?0:t/1000, R=Math.max(W,H);
+    a.globalCompositeOperation=night?'source-over':'soft-light';
+    for(const s of spots){
+      const x=(s.x+Math.sin(k*.05+s.p)*.06)*W, y=(s.y+Math.cos(k*.04+s.p)*.05)*H, r=s.r*R*.55;
+      const gr=a.createRadialGradient(x,y,0,x,y,r); const al=L.strength*(.7+.3*Math.sin(k*.3+s.p));
+      gr.addColorStop(0, night?`rgba(160,185,220,${al*.35})`:L.dapple); gr.addColorStop(1,'rgba(255,255,255,0)');
+      a.globalAlpha=night?1:al*2.2; a.fillStyle=gr; a.fillRect(x-r,y-r,2*r,2*r);
+    }
+    a.globalAlpha=1; a.globalCompositeOperation='source-over';
+    if(night) for(const f of flies){
+      const x=(f.x+Math.sin(k*.11+f.p)*.04)*W, y=(f.y+Math.cos(k*.09+f.p*1.3)*.05)*H, on=.5+.5*Math.sin(k*1.3+f.p*3);
+      const gr=a.createRadialGradient(x,y,0,x,y,10); gr.addColorStop(0,`rgba(246,230,140,${.75*on})`); gr.addColorStop(1,'rgba(246,230,140,0)');
+      a.fillStyle=gr; a.fillRect(x-10,y-10,20,20);
+    }
+  }
+
+  // ---------- time ----------
+  let preview=null;
+  const PH=[[T(5,50),'Dawn'],[T(8),'Morning'],[T(11,30),'Midday'],[T(15),'Afternoon'],[T(17,30),'Golden hour'],[T(19),'Sunset'],[T(20,30),'Dusk'],[T(21,40),'Night']];
+  const phase=m=>{ if(m<T(5,50)) return 'Night'; let n='Night'; for(const [s,x] of PH) if(m>=s) n=x; return n; };
+  const nowMin=()=>{ const d=new Date(); return d.getHours()*60+d.getMinutes(); };
+  function setTime(){
+    const m=preview ?? nowMin(); L=light(m);
+    root.dataset.daylight=phase(m); root.classList.toggle('w-night', isNight(m));
+    root.style.setProperty('--ground', L.ground);
+    dirty=true;
+    document.dispatchEvent(new CustomEvent('daylight',{detail:{minute:m,phase:phase(m),preview:preview!==null}}));
+  }
+  window.snaleDaylight={ set(m){ preview=m; setTime(); }, phase, now:nowMin };
+
+  // ---------- loop: the air drifts all the time; the ground redraws when you scroll, or ~20 times a second for the grass ----------
+  let lastY=-1, lastG=0;
+  function frame(t){
+    if(builtFor===0 || scrollY!==lastY || dirty || (!still && t-lastG>50)){ scatter(); drawGround(t); lastY=scrollY; lastG=t; dirty=false; }
+    drawAir(t);
+    requestAnimationFrame(frame);
+  }
+  size(); setTime(); addEventListener('resize',()=>{ size(); builtFor=-1; });
+  addEventListener('load',()=>{ builtFor=-1; dirty=true; });
+  setInterval(()=>{ if(preview===null) setTime(); },60000);
+  requestAnimationFrame(frame);
+})();
+
+// ---------- the time-of-day preview ----------
+(function(){
+  const box=document.getElementById('dayBtns'), out=document.getElementById('dayOut');
+  if(!box) return;
+  const T=(h,m)=>h*60+(m||0);
+  const PICKS=[['Now',null],['Dawn',T(6,30)],['Midday',T(13)],['Golden hour',T(18)],['Sunset',T(19,30)],['Dusk',T(21)],['Night',T(23)]];
+  const fmt=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+  box.innerHTML=PICKS.map(([n,m],i)=>`<button type="button" data-i="${i}" aria-pressed="${m===null}">${n}</button>`).join('');
+  box.addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return;
+    box.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed', x===b));
+    snaleDaylight.set(PICKS[+b.dataset.i][1]); });
+  document.addEventListener('daylight', e=>{ const {minute,phase,preview}=e.detail; out.textContent=(preview?'':'now ')+fmt(minute)+', '+phase.toLowerCase(); });
+  snaleDaylight.set(null);
+})();
+</script>
+</body>
+</html>
