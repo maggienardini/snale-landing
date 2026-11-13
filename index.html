@@ -104,7 +104,7 @@ section{position:relative;z-index:2}
 /* waitlist */
 .join{display:grid;gap:10px;width:min(540px,100%)}
 /* .join .row{display:flex;border:1px solid var(--blue);background:var(--white)} */
-.join .row{display:flex;border:.5px solid var(--blue);background:var(--white);border-radius:12px;overflow:hidden}
+.join .row{display:flex;border:.5px solid var(--blue);background:var(--white);border-radius:6px;overflow:hidden}
 .join .field{flex:1;min-width:0;position:relative;display:flex}
 .join input{flex:1;min-width:0;border:0;background:none;padding:13px 14px;font-size:16px}
 /* the placeholder, with a gap where the snail lands and becomes the @ */
@@ -163,17 +163,11 @@ main>.idea{min-height:0;padding-block:0;gap:clamp(16px,4vh,28px)}
 .idea h2.long{font-size:clamp(28px,min(7vw,8vh),92px)}
 
 /* spacing: caps line / headline / body / email box */
-/* main{justify-content:center;gap:clamp(24px,5vh,48px)}   body → email box */
-/* main>.hero{gap:0}                                        hero spacing is set by the margins below */
-/* .hero .kick{margin-bottom:clamp(26px,4vh,44px)}          caps line → headline (bigger) */
-/* .hero h1{padding-bottom:0;margin-bottom:clamp(10px,1.6vh,16px)}  headline → body (slightly smaller) */
-
-/* spacing: caps line / headline / body / email box */
-main{justify-content:flex-start;gap:clamp(24px,5vh,48px)}
+main{justify-content:flex-start;gap:clamp(24px,4vh,30px)}
 main>.hero{gap:0;margin-top:auto}      /* centers when there's room, never pushes up under the logo */
 main>#join{margin-bottom:auto}
-.hero .kick{margin-bottom:clamp(40px,8vh,80px)}   /* caps line → headline */
-.hero h1{padding-bottom:0;margin-bottom:clamp(10px,1.6vh,16px)}
+.hero .kick{margin-bottom:clamp(20px,8vh,50px)}   /* caps line → headline */
+.hero h1{padding-bottom:0;margin-bottom:clamp(40px,1.6vh,60px)}
 
 </style>
 <noscript><style>.intro,.skip{display:none}.hlogo{visibility:visible}</style></noscript>
@@ -192,9 +186,9 @@ main>#join{margin-bottom:auto}
   <img class="crawler" id="crawler" src="img/snail.png" alt="">
 
   <section class="in idea hero"> 
-    <span class="kick">A SOCIAL APP FOR ARTISTS, WITH NO AI IN IT</span>
-    <h1 class="zoom">Slow down.</h1>
-    <p>Snale moves at a snail's pace. No endless feed, no like counts, and nothing made by a machine. Just people making things, and the places that gave them the idea.</p>
+    <span class="kick">A SOCIAL MEDIA PLATFORM FOR REAL-LIFE ARTISTS</span>
+    <h1 class="zoom">On the way.</h1>
+    <p>Snale is made by creatives for creatives to get back to what they do best: creating. There's no endless feed, no addictive algorithm, and nothing made by machines.</p>
   </section>
 
     <section class="in idea" id="join">
@@ -204,7 +198,7 @@ main>#join{margin-bottom:auto}
 
 
 </main>
-<footer><div class="in"><span>Made by hand. © 2026 Snale.</span><span>Free, no ads, and your data is never sold.</span><div class="daypick"><span>The light follows your clock: <output id="dayOut"></output></span><div class="daybtns" id="dayBtns" role="group" aria-label="Preview a time of day"></div></div></div></footer>
+<footer><div class="in"><span>© 2026 Snale.</span><div class="daypick"><span>The light follows your clock: <output id="dayOut"></output></span><div class="daybtns" id="dayBtns" role="group" aria-label="Preview a time of day"></div></div></div></footer>
 
 <script>
 (function(){
@@ -288,7 +282,7 @@ main>#join{margin-bottom:auto}
 
   // ---------- waitlist ----------
   const jb=$('#joinBox');
-  jb.innerHTML=`<form novalidate style="display:grid;gap:10px"><div class="row"><label for="em" style="position:absolute;left:-9999px">Email address</label><span class="field"><input type="email" id="em" aria-label="Email address" autocomplete="email" maxlength="254"><span class="hint" id="hint" aria-hidden="true">yourname<span class="at" id="atSpot"></span>email.com</span></span><button class="btn" type="submit">Join the waitlist</button></div><small>One email when Snale reaches your city. Never shared or sold.</small></form>`;
+  jb.innerHTML=`<form novalidate style="display:grid;gap:10px"><div class="row"><label for="em" style="position:absolute;left:-9999px">Email address</label><span class="field"><input type="email" id="em" aria-label="Email address" autocomplete="email" maxlength="254"><span class="hint" id="hint" aria-hidden="true">example<span class="at" id="atSpot"></span>email.com</span></span><button class="btn" type="submit">Join the waitlist</button></div><small>We'll let you know when Snale arrives.</small></form>`;
   jb.querySelector('form').addEventListener('submit',e=>{ e.preventDefault(); const v=$('#em').value.trim(), s=jb.querySelector('small');
     if(v.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){ s.textContent='Enter an email address like name@example.com.'; s.style.color='var(--berry)'; return; }
     const b=jb.querySelector('.btn'); if(b.hasAttribute('aria-busy')) return;
