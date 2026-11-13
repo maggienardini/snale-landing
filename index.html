@@ -10,17 +10,20 @@
 <meta property="og:title" content="Snale">
 <meta property="og:description" content="A social app for artists, with no AI in it. Join the waitlist.">
 <link rel="icon" type="image/png" href="img/snail.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Italiana:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
 <style>
-@font-face{font-family:"Geist";font-style:normal;font-weight:300 700;font-display:swap;src:url(fonts/geist.woff2) format("woff2")}
-@font-face{font-family:"TanAegan";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/tanaegan.woff) format("woff")}
-@font-face{font-family:"Telegraf";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/telegraf.woff) format("woff")}/* Layout: an opening where the logo draws itself and then shrinks into the header, then one idea per screen down a
-   tea-green page while the snail crawls a winding path behind the words and leaves a shiny trail. */
+/* Layout: an opening where the logo draws itself and then shrinks into the header, then one idea per screen down a
+tea-green page while the snail crawls a winding path behind the words and leaves a shiny trail. */
 /* Tea green is the ground, lavender only for small cards, Yale blue for text and buttons. The ground is a living scene that follows the time of day (see the world script at the end). */
 :root{
   --tea:#DEF6CA; --blue:#0B4F6C; --berry:#9D3E7F; --orange:#F68A4C; --lav:#F5E5FC; --white:#FFFFFF;
   --muted:#3F6A6E; --line:#BFE0A6; --water:#B5D7DF; --block:#CDEBB5; --park:#C2E5A2; --orange2:#F45321;
-  --f:"Telegraf","Segoe UI",system-ui,sans-serif;        /* body font */
-  --f-head:"TanAegan","Segoe UI",system-ui,sans-serif;   /* heading font */
+  --f:"DM Sans","Segoe UI",system-ui,sans-serif;
+  --f-head:"Italiana","Segoe UI",system-ui,sans-serif;
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -49,7 +52,7 @@ header .in{display:flex;justify-content:space-between;align-items:center;padding
 .hlogo.on{visibility:visible}
 .btn{border:0;border-radius:8;background:var(--blue);color:var(--white);padding:13px 20px;font-weight:500;font-size:15.5px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
 .btn:hover{background:var(--berry)}
-.btn.small{padding:9px 14px;font-size:14.5px}
+.btn.small{padding:9px 14px;font-size:16.5px}
 
 header .in{justify-content:center}
 /* header .in{padding-bottom:clamp(32px,8vh,96px)} */
@@ -159,7 +162,7 @@ body{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
 main{flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:clamp(16px,3vh,32px);padding-block:8px}
 main>section{width:100%}
 main>.idea{min-height:0;padding-block:0;gap:clamp(16px,4vh,28px)}
-.idea h2,.hero h1{font-size:clamp(36px,min(9.5vw,13vh),128px)}
+.idea h2,.hero h1{font-size:clamp(36px,min(9.5vw,13vh),150)}
 .idea h2.long{font-size:clamp(28px,min(7vw,8vh),92px)}
 
 /* spacing: caps line / headline / body / email box */
